@@ -57,7 +57,7 @@
     <ClInclude Include="language.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Task.h">
+    <ClInclude Include="header\Task.h">
       <Filter>头文件\type</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,10 +4,11 @@
 
 struct Data
 {
+	LL did;
 	//输入数据
-	std::string input;
+	std::wstring input;
 	//输出数据
-	std::string output;
+	std::wstring output;
 	//时间限制（毫秒）
 	unsigned int time;
 	//空间限制（KB）

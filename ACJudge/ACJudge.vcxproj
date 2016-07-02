@@ -151,11 +151,11 @@
     <ClInclude Include="header\Judge.h" />
     <ClInclude Include="header\OIJudge.h" />
     <ClInclude Include="header\Submission.h" />
+    <ClInclude Include="header\Task.h" />
     <ClInclude Include="header\Type.h" />
     <ClInclude Include="language.h" />
     <ClInclude Include="platform.h" />
     <ClInclude Include="result.h" />
-    <ClInclude Include="Task.h" />
     <ClInclude Include="tasktype.h" />
   </ItemGroup>
   <ItemGroup>

@@ -9,7 +9,7 @@ namespace ACOJ
 	struct Submission
 	{
 		//sid提交编号，uid用户编号，tid题目编号
-		unsigned long long sid, uid, tid;
+		LL sid, uid, tid;
 		//如果是OI或提交答案题，score表示最终得分；
 		//如果是ACM题，score表示状态。
 		int score;

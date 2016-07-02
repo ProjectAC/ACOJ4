@@ -8,8 +8,10 @@ namespace ACOJ
 	struct Task
 	{
 		//tidÌâÄ¿±àºÅ
-		unsigned long long tid;
+		LL tid;
 		//Special Judge
-		std::string spj;
+		std::wstring spj;
+		//Special Judge±àĞ´ÓïÑÔ
+		Language language;
 	};
 }
