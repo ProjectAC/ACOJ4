@@ -11,6 +11,7 @@ namespace ACOJ
 	protected:
 		
 	public:
-		void judge(const Submission &s);
+
+		OIJudge(Database db);
 	};
 }

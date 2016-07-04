@@ -21,6 +21,11 @@ void Judge::write(tstring filename, tstring text)
 	fout.close();
 }
 
+void Judge::prepare_answer(const tstring &s)
+{
+	write(_T("sol.out"), s);
+}
+
 void Judge::prepare_spj(const Task &t)
 {
 	write(_T("spj") + get_suffix(t.language), t.spj);
@@ -59,58 +64,60 @@ int Judge::compile(tstring s, Language l)
 		return Result::CE;
 	else
 		return ret;
-
 }
 
-void Judge::judge(const Submission &s)
+void Judge::start(const Submission &s, const Task &t)
 {
-	Submission t = s;
+	Submission res;
 	int ret;
 
-	//获取对应的题目
-	task = db.get_task(s.sid);
-
 	//准备代码文件并编译（如果是脚本语言则视为编译直接通过）
-	prepare_submission(s);
-	if ((ret = compile(_T("sol"), s.language)) != Result::AC)
+	if (t.type != TaskType::ANSWER)
 	{
-		//读取编译错误信息
-		wifstream fin("errlog");
-		TCHAR *x = new TCHAR[100000];
-		fin.getline(x, sizeof(TCHAR) * 100000);
+		prepare_submission(s);
+		if ((ret = compile(_T("sol"), s.language)) != Result::AC)
+		{
+			//读取编译错误信息
+			wifstream fin("errlog");
+			TCHAR *x = new TCHAR[100000];
+			fin.getline(x, sizeof(TCHAR) * 100000);
 
-		t.score = ret;
-		t.CEmessage = x;
-		db.set_submission(t);
-		return;
+			res.score = ret;
+			res.CEmessage = x;
+			db.set_submission(res);
+			return;
+		}
 	}
 
 	//准备SPJ文件并编译
-	prepare_spj(task);
+	prepare_spj(t);
 	if ((ret = compile(_T("spj"), task.language)) != Result::AC)
 	{
-		t.score = ret;
-		t.CEmessage = _T("Special Judge编译错误！");
-		db.set_submission(t);
+		res.score = ret;
+		res.CEmessage = _T("Special Judge编译错误！");
+		db.set_submission(res);
 		return;
 	}
 
 	//使用数据测试
-	vector<Data> data = db.get_data(task);
-	t.detail.clear();
-	for (auto &i : data)
+	vector<Data> data = db.get_data(t);
+	res.detail.clear();
+	for (int i = 0; i < data.size(); i++)
 	{
+		//提交答案题准备选手的答卷
+		if (task.type == TaskType::ANSWER)
+			prepare_answer(s.answer[i]);
 		//执行单点评测过程
-		ret = judge(i);
+		ret = judge(data[i]);
 		if (ret >= 0)  //如果返回的是分数
 		{
-			t.score += ret;
-			t.detail.push_back(t.score);
+			res.score += ret;
+			res.detail.push_back(res.score);
 		}
 		else  //否则返回的是错误原因
-			t.detail.push_back(ret);
+			res.detail.push_back(ret);
 	}
-	db.set_submission(t);
+	db.set_submission(res);
 }
 
 int Judge::run(const Data &d)

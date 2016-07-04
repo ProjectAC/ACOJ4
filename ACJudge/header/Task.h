@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include "../tasktype.h"
+#include "../language.h"
 
 namespace ACOJ
 {
@@ -13,5 +15,7 @@ namespace ACOJ
 		tstring spj;
 		//Special Judge编写语言
 		Language language;
+		//题目类型
+		TaskType type;
 	};
 }

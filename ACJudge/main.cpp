@@ -1,41 +1,48 @@
 ﻿#include "header/OIJudge.h"
-#include "header/ACMJudge.h"
-#include "header/SubmitJudge.h"
+//#include "header/ACMJudge.h"
+//#include "header/SubmitJudge.h"
 #include "tasktype.h"
 #include <thread>
 
 using namespace std;
 using namespace ACOJ;
 
+void wait_for_submission(Submission &s, Database &db)
+{
+	s.sid = 0;
+	while (s = db.get_submission(), !s.sid)
+		this_thread::sleep_for(chrono::milliseconds(500));
+}
+
 int wmain()
 {
-	Database db("DatabaseName", "username", "password");
+	Database db(_T("DatabaseName"), _T("username"), _T("password"));
 	OIJudge oij(db);
-	ACMJudge acmj(db);
-	SubmitJudge aj(db);
-	unsigned int sid;
+	//ACMJudge acmj(db);
+	//AnswerJudge aj(db);
+	Submission s;
+	Task t;
 	
 	//Main loop
+	thread postman(wait_for_submission, s, db);
 	while(true)
 	{
-		if(sid = db.get_submission())
+		postman.join();
+		t = db.get_task(s.tid);
+		switch(t.type)
 		{
-			switch(db.get_task_type())
-			{
-			case TaskType::OI:
-				oij.judge(sid);
-				break;
-			case TaskType::ACM:
-				acmj.judge(sid);
-				break;
-			case TaskType::ANSWER:
-				aj.judge(sid);
-				break;
-			}
+		case TaskType::OI:
+			oij.start(s, t);
+			break;
+		/*case TaskType::ACM:
+			acmj.judge(s, t);
+			break;
+		case TaskType::ANSWER:
+			aj.judge(s, t);
+			break;
+		*/
 		}
-		else
-			this_thread::sleep_for(chrono::milliseconds(100));
 	}
-	
+
 	return 0;
 }
