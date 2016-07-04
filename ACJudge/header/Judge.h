@@ -8,13 +8,15 @@ namespace ACOJ
 	class Judge
 	{
 	protected:
-		std::wstring name;
+		tstring name;
 		Database &db;
 		Task &task;
 
-		int compile(std::wstring s, Language l);
+		virtual int judge(const Data &d) {}
+		virtual int score() {}
+
+		int compile(tstring s, Language l);
 		int run(const Data &d);
-		int score();
 
 		void prepare_submission(const Submission &s);
 		void prepare_data(const Data &d);
@@ -22,10 +24,10 @@ namespace ACOJ
 		
 	public:
 
-		virtual void judge(int sid);
-		void write(std::wstring filename, std::wstring text);
+		void judge(const Submission &s);
+		void write(tstring filename, tstring text);
 
-		static int process(std::wstring cmd, LL ms);
-		static std::wstring get_suffix(Language l);
+		static int process(tstring cmd, LL time, LL space, tstring input = L"input", tstring output = L"output", tstring error = L"errlog");
+		static tstring get_suffix(Language l);
 	};
 }

@@ -14,88 +14,229 @@
 using namespace std;
 using namespace ACOJ;
 
-void Judge::write(wstring filename, wstring text)
+void Judge::write(tstring filename, tstring text)
 {
-	wofstream fout(name + L"/" + filename);
+	tofstream fout(name + _T("/") + filename);
 	fout << text << endl;
 	fout.close();
 }
 
 void Judge::prepare_spj(const Task &t)
 {
-	write(L"spj" + get_suffix(t.language), t.spj);
+	write(_T("spj") + get_suffix(t.language), t.spj);
 }
 
 void Judge::prepare_submission(const Submission &s)
 {
-	write(L"sol" + get_suffix(s.language), s.code);
+	write(_T("sol") + get_suffix(s.language), s.code);
 }
 
 void Judge::prepare_data(const Data &d)
 {
-	write(L"data.in", d.input);
-	write(L"data.out", d.output);
+	write(_T("data.in"), d.input);
+	write(_T("data.out"), d.output);
 }
 
-int Judge::compile(wstring s, Language l)
+int Judge::compile(tstring s, Language l)
 {
+	tstring cmd;
+
 #if defined WINDOWS
-	wstring cmd;
 	if (l == Language::CPP)
-		cmd = L"g++ " + s + L".cpp -o " + s + L".exe -O2 -Wall -lm --static -DONLINE_JUDGE";
+		cmd = _T("g++ ") + s + _T(".cpp -o ") + s + _T(".exe -O2 -Wall -lm --static -DONLINE_JUDGE");
 	else if (l == Language::CPP11)
-		cmd = L"g++ " + s + L".cpp -o " + s + L".exe -O2 -Wall -lm --static -std=c++11 -DONLINE_JUDGE";
+		cmd = _T("g++ ") + s + _T(".cpp -o ") + s + _T(".exe -O2 -Wall -lm --static -std=c++11 -DONLINE_JUDGE");
 	else if (l == Language::C)
-		cmd = L"gcc " + s + L".c -o " + s + L".exe -Wall -lm --static -std=c99 -DONLINE_JUDGE ";
+		cmd = _T("gcc ") + s + _T(".c -o ") + s + _T(".exe -Wall -lm --static -std=c99 -DONLINE_JUDGE");
 	else if (l == Language::PYTHON)
 		return Result::AC;
 #elif defined LINUX
 
 #endif
 
-	return process(cmd, 5000);
+	int ret = process(cmd, 5000, -1, _T(""), _T(""), _T("errlog"));
+	if (ret == 1)
+		return Result::CE;
+	else
+		return ret;
+
+}
+
+void Judge::judge(const Submission &s)
+{
+	Submission t = s;
+	int ret;
+
+	//获取对应的题目
+	task = db.get_task(s.sid);
+
+	//准备代码文件并编译（如果是脚本语言则视为编译直接通过）
+	prepare_submission(s);
+	if ((ret = compile(_T("sol"), s.language)) != Result::AC)
+	{
+		//读取编译错误信息
+		wifstream fin("errlog");
+		TCHAR *x = new TCHAR[100000];
+		fin.getline(x, sizeof(TCHAR) * 100000);
+
+		t.score = ret;
+		t.CEmessage = x;
+		db.set_submission(t);
+		return;
+	}
+
+	//准备SPJ文件并编译
+	prepare_spj(task);
+	if ((ret = compile(_T("spj"), task.language)) != Result::AC)
+	{
+		t.score = ret;
+		t.CEmessage = _T("Special Judge编译错误！");
+		db.set_submission(t);
+		return;
+	}
+
+	//使用数据测试
+	vector<Data> data = db.get_data(task);
+	t.detail.clear();
+	for (auto &i : data)
+	{
+		//执行单点评测过程
+		ret = judge(i);
+		if (ret >= 0)  //如果返回的是分数
+		{
+			t.score += ret;
+			t.detail.push_back(t.score);
+		}
+		else  //否则返回的是错误原因
+			t.detail.push_back(ret);
+	}
+	db.set_submission(t);
 }
 
 int Judge::run(const Data &d)
 {
 #if defined WINDOWS
-	return process(L"sol.exe < data.in > sol.out", d.time);
+	return process(_T("sol.exe"), d.time, d.space, _T("data.in"), _T("data.out"));
 #elif defined LINUX
 
 #endif
 }
 
-int Judge::process(wstring cmd, LL ms)
+int Judge::process(tstring cmd, LL time, LL space, tstring input, tstring output, tstring error)
 {
-	TCHAR str[100];
-	wcscpy(str, cmd.c_str);
-
 #if defined WINDOWS
 
-	STARTUPINFO s;
-	_PROCESS_INFORMATION p;
+	if (time == -1)
+		time = INFINITE;
+	if (space == -1)
+		space = 0x7fffffff;
+	TCHAR str[1000];
+	wcscpy(str, cmd.c_str);
 
+	JOBOBJECT_EXTENDED_LIMIT_INFORMATION ex_lim;
+	JOBOBJECT_BASIC_UI_RESTRICTIONS bs_ui;
+	JOBOBJECTINFOCLASS info;
+
+	HANDLE iocp;
+	JOBOBJECT_ASSOCIATE_COMPLETION_PORT acp;
+
+	//清零标记
+	ZeroMemory(&ex_lim, sizeof(ex_lim));
+
+	//设置最大进程数
+	ex_lim.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
+	ex_lim.BasicLimitInformation.ActiveProcessLimit = 1;
+
+	//设置内存限制
+	ex_lim.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_JOB_MEMORY;
+	ex_lim.JobMemoryLimit = space * 1000;
+
+	//设置时间限制
+	ex_lim.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_JOB_TIME;
+	ex_lim.BasicLimitInformation.PerJobUserTimeLimit.QuadPart = time * 10000;
+
+	//设置系统调用限制
+	bs_ui.UIRestrictionsClass =
+		JOB_OBJECT_UILIMIT_EXITWINDOWS |
+		JOB_OBJECT_UILIMIT_READCLIPBOARD |
+		JOB_OBJECT_UILIMIT_WRITECLIPBOARD |
+		JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS |
+		JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+		JOB_OBJECT_UILIMIT_GLOBALATOMS |
+		JOB_OBJECT_UILIMIT_DESKTOP |
+		JOB_OBJECT_UILIMIT_HANDLES;
+
+	//创建文件
+	HANDLE fin = CreateFile(input.c_str,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ,
+		0,
+		CREATE_ALWAYS,
+		FILE_FLAG_OVERLAPPED,
+		0);
+	HANDLE fout = CreateFile(output.c_str,
+			GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ,
+			0,
+			CREATE_ALWAYS,
+			FILE_FLAG_OVERLAPPED,
+			0);
+	HANDLE ferr = CreateFile(error.c_str,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ,
+		0,
+		CREATE_ALWAYS,
+		FILE_FLAG_OVERLAPPED,
+		0);
+	//创建IO接口
+	STARTUPINFO s = { sizeof(s) };
+	ZeroMemory(&s, sizeof(s));
+	s.cb = sizeof(STARTUPINFO);
+	s.hStdOutput = fin;
+	s.hStdError = ferr;
+	s.hStdInput = fout;
+	s.dwFlags = STARTF_USESTDHANDLES;
+
+	//创建作业
+	HANDLE job = CreateJobObject(NULL, NULL);
+	SetInformationJobObject(job, JobObjectExtendedLimitInformation, &ex_lim, sizeof(ex_lim));
+	SetInformationJobObject(job, JobObjectBasicUIRestrictions, &bs_ui, sizeof(bs_ui));
+
+	//创建进程
+	_PROCESS_INFORMATION p;
 	DWORD ret =
-		CreateProcess(NULL, str,  // Command
-		NULL,             // Process handle not inheritable.   
-		NULL,             // Thread handle not inheritable.   
-		FALSE,            // Set handle inheritance to FALSE.   
-		0,                // No creation flags.   
-		NULL,             // Use parent's environment block.   
-		NULL,             // Use parent's starting directory.   
-		&s,               // Pointer to STARTUPINFO structure.  
-		&p);              // Pointer to PROCESS_INFORMATION structure.
+		CreateProcess(NULL, str,
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_SUSPENDED,
+		NULL,
+		NULL, 
+		&s,
+		&p);
 	if (!ret)
 		return Result::RTE;
 
-	ret = WaitForSingleObject(p.hProcess, ms);
-	LPDWORD code;
+	//将进程绑定到作业，然后搞起！
+	AssignProcessToJobObject(job, p.hProcess);
+	ResumeThread(p.hThread);
+
+	//开始计时
+	HANDLE handles[2];
+	handles[0] = p.hProcess;
+	handles[1] = job;
+	ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
 	switch (ret)
 	{
 	case WAIT_OBJECT_0:
 		//进程退出了
-		ret = GetExitCodeProcess(p.hProcess, code);
-		return *code;
+		GetExitCodeProcess(p.hProcess, &ret);
+		if (ret == 1816)
+			return Result::TLE;
+		else if (ret)
+			return Result::RTE;
+		else
+			return Result::AC;
 
 	case WAIT_TIMEOUT:
 		//进程超时了
@@ -116,23 +257,23 @@ int Judge::process(wstring cmd, LL ms)
 	return Result::RTE;
 }
 
-wstring get_suffix(Language l)
+tstring Judge::get_suffix(Language l)
 {
-	wstring suf;
+	tstring suf;
 	switch (l)
 	{
 	case Language::CPP:
 	case Language::CPP11:
-		suf = L".cpp";
+		suf = _T(".cpp");
 		break;
 	case Language::C:
-		suf = L".c";
+		suf = _T(".c");
 		break;
 	case Language::PYTHON:
-		suf = L".py";
+		suf = _T(".py");
 		break;
 	default:
-		suf = L"";
+		suf = _T("");
 		break;
 	}
 	return suf;

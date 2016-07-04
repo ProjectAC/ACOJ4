@@ -6,9 +6,9 @@ struct Data
 {
 	LL did;
 	//输入数据
-	std::wstring input;
+	tstring input;
 	//输出数据
-	std::wstring output;
+	tstring output;
 	//时间限制（毫秒）
 	unsigned int time;
 	//空间限制（KB）

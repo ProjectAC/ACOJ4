@@ -16,10 +16,12 @@ namespace ACOJ
 		//这个是选手的语言
 		Language language;
 		//如果是非提答，那么保存代码
-		std::wstring code;
+		tstring code;
 		//如果是提答，那么保存答案
-		std::vector<std::wstring> answer;
+		std::vector<tstring> answer;
 		//detail保存每一个测试点的小分。
 		std::vector<int> detail;
+		//编译错误信息
+		tstring CEmessage;
 	};
 }

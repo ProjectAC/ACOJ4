@@ -10,7 +10,7 @@ namespace ACOJ
 		//tidÌâÄ¿±àºÅ
 		LL tid;
 		//Special Judge
-		std::wstring spj;
+		tstring spj;
 		//Special Judge±àĞ´ÓïÑÔ
 		Language language;
 	};
