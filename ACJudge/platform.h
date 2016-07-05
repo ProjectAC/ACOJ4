@@ -3,6 +3,7 @@
 
 #define WINDOWS
 #define UNICODE
+#define DATABASE
 
 #ifdef ANSI
 typedef std::string tstring;
@@ -13,3 +14,4 @@ typedef std::wstring tstring;
 typedef std::wifstream tifstream;
 typedef std::wofstream tofstream;
 #endif
+

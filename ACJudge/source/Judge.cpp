@@ -56,7 +56,7 @@ int Judge::compile(tstring s, Language l)
 	else if (l == Language::PYTHON)
 		return Result::AC;
 #elif defined LINUX
-
+	
 #endif
 
 	int ret = process(cmd, 5000, -1, _T(""), _T(""), _T("errlog"));
