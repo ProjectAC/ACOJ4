@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "../language.h"
+#include "../platform.h"
 
 namespace ACOJ
 {

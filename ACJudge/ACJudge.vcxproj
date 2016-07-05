@@ -160,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="source\Database.cpp" />
     <ClCompile Include="source\Judge.cpp" />
     <ClCompile Include="source\OIJudge.cpp" />
   </ItemGroup>

@@ -25,6 +25,9 @@
     <Filter Include="头文件\type">
       <UniqueIdentifier>{5325efbb-8c61-4a92-9118-6c2bf5831993}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\database">
+      <UniqueIdentifier>{23a07043-028d-4b29-9607-0170a015ff19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="platform.h">
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="source\OIJudge.cpp">
       <Filter>源文件\judge</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Database.cpp">
+      <Filter>源文件\database</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

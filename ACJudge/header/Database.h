@@ -1,19 +1,24 @@
 #pragma once
 #include "Type.h"
+#include "../platform.h"
+#include <vector>
 
-class Database
+namespace ACOJ
 {
+	class Database
+	{
 
 
-public:
-	auto sql(tstring cmd);
+	public:
+		auto sql(tstring cmd);
 
-	Task get_task(const unsigned long long &tid);
-	vector<Data> get_data(const Task &s);
-	Submission get_submission(const unsigned long long &sid);
-	Submission get_submission();
+		Task get_task(const LL &tid);
+		std::vector<Data> get_data(const Task &s);
+		Submission get_submission(const LL &sid);
+		Submission get_submission();
 
-	void set_submission(Submission t);
+		void set_submission(Submission t);
 
-	Database(tstring name, tstring username, tstring password);
-};
+		Database(tstring name, tstring username, tstring password);
+	};
+}

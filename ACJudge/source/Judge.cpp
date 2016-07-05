@@ -102,7 +102,7 @@ void Judge::start(const Submission &s, const Task &t)
 	//使用数据测试
 	vector<Data> data = db.get_data(t);
 	res.detail.clear();
-	for (int i = 0; i < data.size(); i++)
+	for (size_t i = 0; i < data.size(); i++)
 	{
 		//提交答案题准备选手的答卷
 		if (task.type == TaskType::ANSWER)
@@ -138,14 +138,10 @@ int Judge::process(tstring cmd, LL time, LL space, tstring input, tstring output
 	if (space == -1)
 		space = 0x7fffffff;
 	TCHAR str[1000];
-	wcscpy(str, cmd.c_str);
-
+	wcscpy_s(str, cmd.c_str());
+	
 	JOBOBJECT_EXTENDED_LIMIT_INFORMATION ex_lim;
 	JOBOBJECT_BASIC_UI_RESTRICTIONS bs_ui;
-	JOBOBJECTINFOCLASS info;
-
-	HANDLE iocp;
-	JOBOBJECT_ASSOCIATE_COMPLETION_PORT acp;
 
 	//清零标记
 	ZeroMemory(&ex_lim, sizeof(ex_lim));
@@ -156,7 +152,7 @@ int Judge::process(tstring cmd, LL time, LL space, tstring input, tstring output
 
 	//设置内存限制
 	ex_lim.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_JOB_MEMORY;
-	ex_lim.JobMemoryLimit = space * 1000;
+	ex_lim.JobMemoryLimit = SIZE_T(space * 1000);
 
 	//设置时间限制
 	ex_lim.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_JOB_TIME;
@@ -174,21 +170,21 @@ int Judge::process(tstring cmd, LL time, LL space, tstring input, tstring output
 		JOB_OBJECT_UILIMIT_HANDLES;
 
 	//创建文件
-	HANDLE fin = CreateFile(input.c_str,
+	HANDLE fin = CreateFile(input.c_str(),
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ,
 		0,
 		CREATE_ALWAYS,
 		FILE_FLAG_OVERLAPPED,
 		0);
-	HANDLE fout = CreateFile(output.c_str,
+	HANDLE fout = CreateFile(output.c_str(),
 			GENERIC_READ | GENERIC_WRITE,
 			FILE_SHARE_READ,
 			0,
 			CREATE_ALWAYS,
 			FILE_FLAG_OVERLAPPED,
 			0);
-	HANDLE ferr = CreateFile(error.c_str,
+	HANDLE ferr = CreateFile(error.c_str(),
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ,
 		0,

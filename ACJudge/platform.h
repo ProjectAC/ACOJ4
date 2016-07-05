@@ -1,8 +1,8 @@
 #include <string>
 #include <tchar.h>
+#include <cstdint>
 
 #define WINDOWS
-#define UNICODE
 #define DATABASE
 
 #ifdef ANSI
@@ -15,3 +15,7 @@ typedef std::wifstream tifstream;
 typedef std::wofstream tofstream;
 #endif
 
+namespace ACOJ
+{
+	typedef uint64_t LL;
+}
